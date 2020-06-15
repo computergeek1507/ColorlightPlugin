@@ -12,7 +12,7 @@ namespace ColorlightPlugin
         {
             public string EthernetOutput { get; set; }
             public string MatrixName { get; set; }
-            public int Brightness { get; set; }
+            public int Brightness { get; set; } = 100;
         }
 
         Settings _appSetting = new Settings();
@@ -36,9 +36,7 @@ namespace ColorlightPlugin
         }
         public void Save()
         {
-            System.Xml.Serialization.XmlSerializer writer =
-                new System.Xml.Serialization.XmlSerializer(typeof(Settings));
-
+            System.Xml.Serialization.XmlSerializer writer = new System.Xml.Serialization.XmlSerializer(typeof(Settings));
             var path = _showFolder + "//ColorlightPlugin.xml";
             System.IO.FileStream file = System.IO.File.Create(path);
             writer.Serialize(file, _appSetting);

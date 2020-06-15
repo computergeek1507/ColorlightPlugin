@@ -169,7 +169,7 @@ namespace xScheduleWrapper
 		{
 			_action = action;
 
-			return _plugin.Start(showDir, xScheduleURL);
+			return _plugin.Start(showDir);
 		}
 
 		[DllExport("xSchedule_Stop", CallingConvention = CallingConvention.StdCall)]

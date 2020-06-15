@@ -17,10 +17,7 @@ namespace ColorlightPlugin
 	{
 		public event EventHandler<string> SendError;
 		public event EventHandler SendReloadDimensions;
-
-		public string _showDir = "";
-		string _xScheduleURL = "";
-		public int _brightness = 100;
+	
 		StatusForm _form;
 
 		public IList<LivePacketDevice> _allDevices;
@@ -30,6 +27,8 @@ namespace ColorlightPlugin
 		public int _intSelectOutput = -1;
 		public string _selectedOutput;
 		public string _selectedMatrix;
+		public int _brightness = 100;
+		public string _showDir = "";
 
 		void OnSendError(string errorString) => SendError.Invoke(this, errorString);
 
@@ -65,10 +64,9 @@ namespace ColorlightPlugin
 			return false;
 		}
 
-		public bool Start(string showDir, string xScheduleURL)
+		public bool Start(string showDir)
 		{
 			_showDir = showDir;
-			_xScheduleURL = xScheduleURL;
 
 			if (_form != null) return true;
 
@@ -103,17 +101,28 @@ namespace ColorlightPlugin
 		{
 		}
 
+		/// <summary>
+		/// readload settings on event from form window
+		/// </summary>
 		private void Reload_Setting(object sender, EventArgs e)
 		{
 			ReadSetting();
 		}
 
+		/// <summary>
+		/// read the setting XML file from the show directory
+		/// </summary>
 		private bool ReadSetting()
 		{
 			PluginSettings setting = new PluginSettings(_showDir);
 			_selectedOutput = setting.EthernetOutput;
 			_selectedMatrix = setting.MatrixName;
 			_brightness = setting.Brightness;
+
+			if (_brightness == 0)
+			{
+				_brightness = 100;
+			}
 
 			for (int i = 0; i != _allDevices.Count; ++i)
 			{
@@ -151,6 +160,9 @@ namespace ColorlightPlugin
 			return true;
 		}
 
+		/// <summary>
+		/// This function is called for each frame
+		/// </summary>
 		public void ManipulateBuffer(PixelBuffer buffer)
 		{
 			OutputToPanel(buffer);
@@ -161,6 +173,9 @@ namespace ColorlightPlugin
 			//MessageBox.Show(parameters);
 		}
 
+		/// <summary>
+		/// This Outputs the PixelBuffer data to the panel.
+		/// </summary>
 		void OutputToPanel(PixelBuffer buffer)
 		{
 			try
@@ -266,7 +281,65 @@ namespace ColorlightPlugin
 			int offset = 0;
 			int width = pixelsWidth * 3;
 
-			int fullDataOffset = startChannel + dataOffset;
+			byte[] mainByte = new byte[(width) + 7];
+
+			EthernetType type = ((EthernetType)0x5500);
+
+			if (row < 256)
+			{
+				type = ((EthernetType)0x5500);
+				mainByte[0] = Convert.ToByte(row);
+			}
+			else
+			{
+				type = ((EthernetType)0x5501);
+				mainByte[0] = Convert.ToByte(row % 256);
+			}
+
+			EthernetLayer ethernetLayer = new EthernetLayer
+			{
+				Source = source,
+				Destination = destination,
+				EtherType = type
+			};
+
+			//mainByte[0] = Convert.ToByte(row);
+			mainByte[1] = Convert.ToByte(offset >> 8);
+			mainByte[2] = Convert.ToByte(offset & 0xFF);
+			mainByte[3] = Convert.ToByte(pixelsWidth >> 8);
+			mainByte[4] = Convert.ToByte(pixelsWidth & 0xFF);
+			mainByte[5] = 0x08;
+			mainByte[6] = 0x80;
+
+			for (int i = 0; i < width; i++)
+			{
+				int indexwHead = 7 + i;
+				byte oldValue = data[i + (dataOffset * 3) + (startChannel - 1)];
+				//int oldint = Convert.ToInt32(data[i + (fullDataOffset * 3)]);
+				int newint = ((oldValue * _brightness) / 100);
+				byte newValue = Convert.ToByte(newint);
+				mainByte[indexwHead] = newValue;
+				//mainByte[indexwHead] = 0x88;
+			}
+
+			PayloadLayer payloadLayer =
+				new PayloadLayer
+				{
+					Data = new Datagram(mainByte)
+				};
+
+			PacketBuilder builder = new PacketBuilder(ethernetLayer, payloadLayer);
+
+			return builder.Build(DateTime.Now);
+		}
+
+		/// <summary>
+		/// This function builds the Ethernet Row Data Packet with every third channel set to a color.
+		/// </summary>
+		private Packet BuildTestPacket(MacAddress source, MacAddress destination, int row, int pixelsWidth,int dataOffset, byte color)
+		{
+			int offset = 0;
+			int width = pixelsWidth * 3;
 
 			byte[] mainByte = new byte[(width) + 7];
 
@@ -301,8 +374,10 @@ namespace ColorlightPlugin
 			for (int i = 0; i < width; i++)
 			{
 				int indexwHead = 7 + i;
-				byte oldValue = data[i + (fullDataOffset * 3)];
-				int oldint = Convert.ToInt32(data[i + (fullDataOffset * 3)]);
+				byte oldValue = 0;
+				if(i%3==0)
+					oldValue = color;
+				//int oldint = Convert.ToInt32(data[i + (fullDataOffset * 3)]);
 				int newint = ((oldValue * _brightness) / 100);
 				byte newValue = Convert.ToByte(newint);
 				mainByte[indexwHead] = newValue;
@@ -319,5 +394,54 @@ namespace ColorlightPlugin
 
 			return builder.Build(DateTime.Now);
 		}
+
+		/// <summary>
+		/// This function sets the panel to a color.
+		/// </summary>
+		public void TestPanel(byte color)
+		{
+			try
+			{
+				if (_intSelectOutput == -1)
+				{
+					OnSendError("No Ethernet Output Setup, Skipping Output");
+					return;
+				}
+
+				if (_startChannel == -1)
+				{
+					OnSendError("No Matrix Set, Skipping Output");
+					return;
+				}
+				PacketDevice selectedDevice = _allDevices[_intSelectOutput];
+				using (PacketCommunicator communicator = selectedDevice.Open(100, // name of the device
+																		 PacketDeviceOpenAttributes.Promiscuous, // promiscuous mode
+																		 100)) // read timeout
+				{
+					MacAddress source = new MacAddress("22:22:33:44:55:66");
+
+					// set mac destination to 02:02:02:02:02:02
+					MacAddress destination = new MacAddress("11:22:33:44:55:66");
+
+					// Ethernet Layer
+					int pixelWidth = _panelWidth;
+					int pixelHeight = _panelHeight;
+					int startChannel = _startChannel;
+
+					communicator.SendPacket(BuildFirstPacket(source, destination));
+					communicator.SendPacket(BuildSecondPacket(source, destination));
+					for (int i = 0; i < pixelHeight; i++)
+					{
+						int offset = pixelWidth * i;
+						communicator.SendPacket(BuildTestPacket(source, destination, i, pixelWidth, offset, color));
+					}
+				}
+			}
+			catch (Exception ex)
+			{
+				OnSendError(ex.Message);
+			}
+		}
+
 	}
 }
