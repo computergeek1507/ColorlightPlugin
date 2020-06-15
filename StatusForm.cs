@@ -48,6 +48,7 @@ namespace ColorlightPlugin
 			if (outputComboBox.SelectedIndex != -1 && outputComboBox.SelectedIndex < _plugin._allDevices.Count)
 				settings.EthernetOutput = _plugin._allDevices[outputComboBox.SelectedIndex].Name;
 			settings.MatrixName = matrixComboBox.SelectedItem.ToString();
+			settings.Brightness = _plugin._brightness;
 
 			settings.Save();
 			OnReloadSettings();

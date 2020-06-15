@@ -20,7 +20,7 @@ namespace ColorlightPlugin
 
 		public string _showDir = "";
 		string _xScheduleURL = "";
-		int _brightness = 100;
+		public int _brightness = 100;
 		StatusForm _form;
 
 		public IList<LivePacketDevice> _allDevices;
@@ -113,6 +113,7 @@ namespace ColorlightPlugin
 			PluginSettings setting = new PluginSettings(_showDir);
 			_selectedOutput = setting.EthernetOutput;
 			_selectedMatrix = setting.MatrixName;
+			_brightness = setting.Brightness;
 
 			for (int i = 0; i != _allDevices.Count; ++i)
 			{

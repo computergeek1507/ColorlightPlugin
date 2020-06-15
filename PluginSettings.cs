@@ -12,6 +12,7 @@ namespace ColorlightPlugin
         {
             public string EthernetOutput { get; set; }
             public string MatrixName { get; set; }
+            public int Brightness { get; set; }
         }
 
         Settings _appSetting = new Settings();
@@ -53,6 +54,11 @@ namespace ColorlightPlugin
         { 
             get { return _appSetting.MatrixName; }
             set { _appSetting.MatrixName = value; }
+        }
+        public int Brightness 
+        { 
+            get { return _appSetting.Brightness; }
+            set { _appSetting.Brightness = value; }
         }
     }
 }
