@@ -18,6 +18,8 @@ namespace ColorlightPlugin
 
 		public event EventHandler ReloadSettings;
 
+		int testCount = 0;
+
 		public StatusForm(ColorlightPlugin plugin)
 		{
 			_plugin = plugin;
@@ -122,21 +124,28 @@ namespace ColorlightPlugin
 			   (_plugin._panelHeight * _plugin._panelWidth * 3));
 		}
 
-		private void buttonTest_Click(object sender, EventArgs e)
-		{
-			listBox1.Items.Add("Sending Test Color");
-			_plugin.TestPanel(0xFF);
-		}
-
 		private void timer1_Tick(object sender, EventArgs e)
 		{
-			string result;
-			_plugin.xSchedule_Action("GetPlayingStatus", "", "", out result);
-			//listBox1.Items.Add(result.ToString());
-			if (result.Contains("\"status\":\"idle\""))
+			if (checkBoxTest.Checked)
 			{
-				_plugin.TestPanel(0x00);
+				if (testCount > 2) testCount = 0;
+				_plugin.TestPanel(0xFF, testCount);
+				++testCount;				
 			}
+			else
+			{
+				string result;
+				_plugin.xSchedule_Action("GetPlayingStatus", "", "", out result);
+				//listBox1.Items.Add(result.ToString());
+				if (result.Contains("\"status\":\"idle\""))
+				{
+					_plugin.TestPanel(0x00, 0);
+				}
+			}
+		}
+
+		private void checkBoxTest_CheckedChanged(object sender, EventArgs e)
+		{
 
 		}
 	}

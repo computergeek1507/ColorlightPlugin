@@ -336,7 +336,7 @@ namespace ColorlightPlugin
 		/// <summary>
 		/// This function builds the Ethernet Row Data Packet with every third channel set to a color.
 		/// </summary>
-		private Packet BuildTestPacket(MacAddress source, MacAddress destination, int row, int pixelsWidth,int dataOffset, byte color)
+		private Packet BuildTestPacket(MacAddress source, MacAddress destination, int row, int pixelsWidth, int dataOffset, byte color, int testOffset)
 		{
 			int offset = 0;
 			int width = pixelsWidth * 3;
@@ -375,7 +375,7 @@ namespace ColorlightPlugin
 			{
 				int indexwHead = 7 + i;
 				byte oldValue = 0;
-				if(i%3==0)
+				if( i % 3 == testOffset)
 					oldValue = color;
 				//int oldint = Convert.ToInt32(data[i + (fullDataOffset * 3)]);
 				int newint = ((oldValue * _brightness) / 100);
@@ -398,7 +398,7 @@ namespace ColorlightPlugin
 		/// <summary>
 		/// This function sets the panel to a color.
 		/// </summary>
-		public void TestPanel(byte color)
+		public void TestPanel(byte color, int testOffset)
 		{
 			try
 			{
@@ -433,7 +433,7 @@ namespace ColorlightPlugin
 					for (int i = 0; i < pixelHeight; i++)
 					{
 						int offset = pixelWidth * i;
-						communicator.SendPacket(BuildTestPacket(source, destination, i, pixelWidth, offset, color));
+						communicator.SendPacket(BuildTestPacket(source, destination, i, pixelWidth, offset, color, testOffset));
 					}
 				}
 			}

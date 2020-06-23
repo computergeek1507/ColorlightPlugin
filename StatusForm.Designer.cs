@@ -36,10 +36,10 @@
             this.matrixComboBox = new System.Windows.Forms.ComboBox();
             this.textBoxStatus = new System.Windows.Forms.TextBox();
             this.buttonSave = new System.Windows.Forms.Button();
-            this.buttonTest = new System.Windows.Forms.Button();
             this.timer1 = new System.Windows.Forms.Timer(this.components);
             this.label3 = new System.Windows.Forms.Label();
             this.brightnessNumericUpDown = new System.Windows.Forms.NumericUpDown();
+            this.checkBoxTest = new System.Windows.Forms.CheckBox();
             ((System.ComponentModel.ISupportInitialize)(this.brightnessNumericUpDown)).BeginInit();
             this.SuspendLayout();
             // 
@@ -101,30 +101,19 @@
             this.textBoxStatus.Location = new System.Drawing.Point(15, 89);
             this.textBoxStatus.Name = "textBoxStatus";
             this.textBoxStatus.ReadOnly = true;
-            this.textBoxStatus.Size = new System.Drawing.Size(286, 20);
+            this.textBoxStatus.Size = new System.Drawing.Size(255, 20);
             this.textBoxStatus.TabIndex = 5;
             // 
             // buttonSave
             // 
             this.buttonSave.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
-            this.buttonSave.Location = new System.Drawing.Point(307, 87);
+            this.buttonSave.Location = new System.Drawing.Point(359, 86);
             this.buttonSave.Name = "buttonSave";
             this.buttonSave.Size = new System.Drawing.Size(42, 23);
             this.buttonSave.TabIndex = 6;
             this.buttonSave.Text = "Save";
             this.buttonSave.UseVisualStyleBackColor = true;
             this.buttonSave.Click += new System.EventHandler(this.buttonSave_Click);
-            // 
-            // buttonTest
-            // 
-            this.buttonTest.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
-            this.buttonTest.Location = new System.Drawing.Point(355, 87);
-            this.buttonTest.Name = "buttonTest";
-            this.buttonTest.Size = new System.Drawing.Size(46, 23);
-            this.buttonTest.TabIndex = 7;
-            this.buttonTest.Text = "Test";
-            this.buttonTest.UseVisualStyleBackColor = true;
-            this.buttonTest.Click += new System.EventHandler(this.buttonTest_Click);
             // 
             // timer1
             // 
@@ -160,15 +149,26 @@
             0,
             0});
             // 
+            // checkBoxTest
+            // 
+            this.checkBoxTest.AutoSize = true;
+            this.checkBoxTest.Location = new System.Drawing.Point(276, 90);
+            this.checkBoxTest.Name = "checkBoxTest";
+            this.checkBoxTest.Size = new System.Drawing.Size(77, 17);
+            this.checkBoxTest.TabIndex = 10;
+            this.checkBoxTest.Text = "Test Mode";
+            this.checkBoxTest.UseVisualStyleBackColor = true;
+            this.checkBoxTest.CheckedChanged += new System.EventHandler(this.checkBoxTest_CheckedChanged);
+            // 
             // StatusForm
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(413, 197);
             this.ControlBox = false;
+            this.Controls.Add(this.checkBoxTest);
             this.Controls.Add(this.brightnessNumericUpDown);
             this.Controls.Add(this.label3);
-            this.Controls.Add(this.buttonTest);
             this.Controls.Add(this.buttonSave);
             this.Controls.Add(this.textBoxStatus);
             this.Controls.Add(this.matrixComboBox);
@@ -199,9 +199,9 @@
         private System.Windows.Forms.ComboBox matrixComboBox;
         private System.Windows.Forms.TextBox textBoxStatus;
         private System.Windows.Forms.Button buttonSave;
-        private System.Windows.Forms.Button buttonTest;
         private System.Windows.Forms.Timer timer1;
         private System.Windows.Forms.Label label3;
         private System.Windows.Forms.NumericUpDown brightnessNumericUpDown;
+        private System.Windows.Forms.CheckBox checkBoxTest;
     }
 }
