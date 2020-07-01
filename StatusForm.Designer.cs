@@ -29,6 +29,7 @@
         private void InitializeComponent()
         {
             this.components = new System.ComponentModel.Container();
+            System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(StatusForm));
             this.listBox1 = new System.Windows.Forms.ListBox();
             this.label1 = new System.Windows.Forms.Label();
             this.label2 = new System.Windows.Forms.Label();
@@ -151,6 +152,7 @@
             // 
             // checkBoxTest
             // 
+            this.checkBoxTest.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
             this.checkBoxTest.AutoSize = true;
             this.checkBoxTest.Location = new System.Drawing.Point(276, 90);
             this.checkBoxTest.Name = "checkBoxTest";
@@ -176,12 +178,12 @@
             this.Controls.Add(this.label2);
             this.Controls.Add(this.label1);
             this.Controls.Add(this.listBox1);
+            this.Icon = ((System.Drawing.Icon)(resources.GetObject("$this.Icon")));
             this.Margin = new System.Windows.Forms.Padding(2);
             this.MaximizeBox = false;
             this.MinimizeBox = false;
             this.MinimumSize = new System.Drawing.Size(263, 198);
             this.Name = "StatusForm";
-            this.ShowInTaskbar = false;
             this.Text = "Colorlight Plugin";
             this.Load += new System.EventHandler(this.StatusForm_Load);
             this.Shown += new System.EventHandler(this.StatusForm_Shown);
