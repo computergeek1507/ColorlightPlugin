@@ -20,6 +20,8 @@ namespace ColorlightPlugin
 	
 		StatusForm _form;
 
+		bool _outputing = false;
+
 		public IList<LivePacketDevice> _allDevices;
 		public int _panelWidth = 0;
 		public int _panelHeight = 0;
@@ -176,8 +178,12 @@ namespace ColorlightPlugin
 		/// <summary>
 		/// This Outputs the PixelBuffer data to the panel.
 		/// </summary>
-		void OutputToPanel(PixelBuffer buffer)
+		async Task OutputToPanel(PixelBuffer buffer)
 		{
+			if (_outputing)
+				return;
+
+			_outputing = true;
 			try
 			{
 				if (_intSelectOutput == -1)
@@ -219,6 +225,7 @@ namespace ColorlightPlugin
 			{
 				OnSendError(ex.Message);
 			}
+			_outputing = false;
 		}
 
 		/// <summary>
