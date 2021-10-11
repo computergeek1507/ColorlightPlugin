@@ -1,4 +1,4 @@
-﻿// *******************************************
+// *******************************************
 //
 // To build an xSchedule plugin do NOT touch this
 // code.  All changes should be made in Plugin.cs
@@ -8,6 +8,7 @@
 using System;
 using System.Runtime.InteropServices;
 using System.Drawing;
+using System.Windows.Forms;
 
 // requires package UnmanagedExports - version 1.6
 // https://github.com/3F/DllExport
@@ -169,7 +170,15 @@ namespace xScheduleWrapper
 		{
 			_action = action;
 
-			return _plugin.Start(showDir);
+			try
+			{
+				return _plugin.Start(showDir);
+			}
+			catch(Exception e)
+            		{
+				MessageBox.Show(e.Message);
+           		}
+			return false;
 		}
 
 		[DllExport("xSchedule_Stop", CallingConvention = CallingConvention.StdCall)]
