@@ -175,9 +175,9 @@ namespace xScheduleWrapper
 				return _plugin.Start(showDir);
 			}
 			catch(Exception e)
-            		{
+            {
 				MessageBox.Show(e.Message);
-           		}
+           	}
 			return false;
 		}
 

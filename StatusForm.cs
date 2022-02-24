@@ -6,6 +6,7 @@ using System.ComponentModel;
 using System.Data;
 using System.Drawing;
 using System.Linq;
+using System.Reflection;
 using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Forms;
@@ -57,6 +58,8 @@ namespace ColorlightPlugin
 
 		private void StatusForm_Shown(object sender, EventArgs e)
 		{
+			string strCompTime = Properties.Resources.BuildDate;
+			this.Text += " - " + strCompTime;
 			LoadSettings();
 		}
 
@@ -115,6 +118,8 @@ namespace ColorlightPlugin
 				outputComboBox.SelectedIndex = index;
 			}
 			SetStatusBox();
+
+			
 		}
 
 		private void SetStatusBox()
@@ -148,5 +153,10 @@ namespace ColorlightPlugin
 		{
 
 		}
-	}
+
+        private void clearToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+			listBox1.Items.Clear();
+		}
+    }
 }
