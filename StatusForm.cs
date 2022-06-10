@@ -53,13 +53,10 @@ namespace ColorlightPlugin
 				return;
 			}
 			panelComboBox.SelectedIndex = index;
-			//
-			//LoadSettings(panel);
 		}
 
 		private void buttonSave_Click(object sender, EventArgs e)
 		{
-			//PluginSettings settings = new PluginSettings(_plugin._showDir);
 			string output = string.Empty;
 			if (outputComboBox.SelectedIndex != -1 && outputComboBox.SelectedIndex < _plugin._allDevices.Count)
 			{
@@ -68,7 +65,6 @@ namespace ColorlightPlugin
 			string matrixName = matrixComboBox.SelectedItem.ToString();
 			int brightness = decimal.ToInt32(brightnessNumericUpDown.Value);
 			_plugin.SetSettings(panelComboBox.SelectedIndex, output, outputComboBox.SelectedIndex, brightness, matrixName);
-			//LoadSettings();
 		}
 
 		private void StatusForm_Shown(object sender, EventArgs e)

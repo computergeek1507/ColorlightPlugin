@@ -10,11 +10,6 @@ namespace ColorlightPlugin
     {
         string _showFolder;
 
-        public PluginSettings()
-        {
-
-        }
-
         public void SetShowFolder(string showFolder)
         {
             _showFolder = showFolder;

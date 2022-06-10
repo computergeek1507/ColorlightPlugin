@@ -98,6 +98,9 @@ namespace ColorlightPlugin
 			_form = null;
 		}
 
+		/// <summary>
+		/// get the panel object
+		/// </summary>
 		public PanelSettings GetPanel(int index) 
 		{
 			if (index < _panelList.Count && index >= 0)
@@ -156,7 +159,10 @@ namespace ColorlightPlugin
             return ok;
 		}
 
-        private bool GetMatixData(PanelSettings panel)
+		/// <summary>
+		/// get the matrix settings from xSchedule
+		/// </summary>
+		private bool GetMatixData(PanelSettings panel)
         {
 			bool ok = true;
 
@@ -179,29 +185,32 @@ namespace ColorlightPlugin
             return ok;
         }
 
-        public void SetSettings(int index, string outputName, int outputIndex,
+		/// <summary>
+		/// save the panel settings from the GUI
+		/// </summary>
+		public void SetSettings(int index, string outputName, int outputIndex,
 			int brightness, string matrixName)
 		{
 			_panelList[index].OutputName = outputName;
 			_panelList[index].OutputIndex = outputIndex;
 			_panelList[index].Brightness = brightness;
 			_panelList[index].MatrixName = matrixName;
-			//_panelList[index].PanelHeight = panelHeight;
-			//_panelList[index].PanelWidth = panelWidth;
-			//_panelList[index].StartChannel = startChannel;
-
 			GetMatixData(_panelList[index]);
-
-
 			SaveSetting();
 			OnSendSetPanel(index);
 		}
 
+		/// <summary>
+		/// Save Settings
+		/// </summary>
 		public void SaveSetting()
 		{
 			_setting.Save(_panelList);			
 		}
 
+		/// <summary>
+		/// Add a new panel
+		/// </summary>
 		public void AddPanel(string name)
 		{
 			PanelSettings panel = new PanelSettings();
@@ -211,6 +220,9 @@ namespace ColorlightPlugin
 			OnSendSetPanel(_panelList.Count-1);
 		}
 
+		/// <summary>
+		/// remove a  panel
+		/// </summary>
 		public void RemovePanel(int index)
 		{
 			if(index < _panelList.Count && index >= 0)
@@ -228,6 +240,9 @@ namespace ColorlightPlugin
 			}			
 		}
 
+		/// <summary>
+		/// Generate List Of Panel Names for GUI dropdown
+		/// </summary>
 		public string[] GetPanelNames()
 		{
 			return _panelList.Select(s=>s.PanelName).ToArray();
