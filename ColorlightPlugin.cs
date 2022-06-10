@@ -13,28 +13,29 @@ using Newtonsoft.Json;
 
 namespace ColorlightPlugin
 {
-	public class ColorlightPlugin
+    public class ColorlightPlugin
 	{
 		public event EventHandler<string> SendError;
-		public event EventHandler SendReloadDimensions;
-	
+		//public event EventHandler<PanelSettings> SendReloadPanel;
+		public event EventHandler<int> SendIndex;
+
 		StatusForm _form;
+
+		List<PanelSettings> _panelList = new List<PanelSettings>();
 
 		bool _outputing = false;
 
 		public IList<LivePacketDevice> _allDevices;
-		public int _panelWidth = 0;
-		public int _panelHeight = 0;
-		public int _startChannel = -1;
-		public int _intSelectOutput = -1;
-		public string _selectedOutput;
-		public string _selectedMatrix;
-		public int _brightness = 100;
+
 		public string _showDir = "";
+
+		PluginSettings _setting = new PluginSettings();
 
 		void OnSendError(string errorString) => SendError.Invoke(this, errorString);
 
-		void OnReloadDimensions() => SendReloadDimensions.Invoke(this, null);
+		//void OnReloadPanel(PanelSettings panel) => SendReloadPanel.Invoke(this, panel);
+
+		void OnSendSetPanel(int index) => SendIndex.Invoke(this, index);
 
 		public string GetMenuString()
 		{
@@ -53,6 +54,7 @@ namespace ColorlightPlugin
 		public bool Load(string showDir)
 		{
 			_showDir = showDir;
+			_setting.SetShowFolder(_showDir);
 			return true;
 		}
 
@@ -69,14 +71,16 @@ namespace ColorlightPlugin
 		public bool Start(string showDir)
 		{
 			_showDir = showDir;
+			_setting.SetShowFolder(_showDir);
 
 			if (_form != null) return true;
 
 			_form = new StatusForm(this);
 
 			SendError += _form.StatusFormMeasage;
-			SendReloadDimensions += _form.ReloadStatusBox;
-			_form.ReloadSettings += Reload_Setting;
+			//SendReloadPanel += _form.ReloadStatusPanel;
+			SendIndex += _form.LoadSelectPanel;
+			//_form.ReloadSettings += Reload_Setting;
 
 			_allDevices = LivePacketDevice.AllLocalMachine;
 			ReadSetting();
@@ -92,6 +96,15 @@ namespace ColorlightPlugin
 
 			_form.Close();
 			_form = null;
+		}
+
+		public PanelSettings GetPanel(int index) 
+		{
+			if (index < _panelList.Count && index >= 0)
+			{
+				return _panelList[index];
+			}
+			return null;
 		}
 
 		public void WipeSettings()
@@ -116,50 +129,108 @@ namespace ColorlightPlugin
 		/// </summary>
 		private bool ReadSetting()
 		{
-			PluginSettings setting = new PluginSettings(_showDir);
-			_selectedOutput = setting.EthernetOutput;
-			_selectedMatrix = setting.MatrixName;
-			_brightness = setting.Brightness;
+			_panelList = _setting.Load();
 
-			if (_brightness == 0)
-			{
-				_brightness = 100;
-			}
+			bool ok = true;
 
-			for (int i = 0; i != _allDevices.Count; ++i)
-			{
-				LivePacketDevice device = _allDevices[i];
-				if (device.Name == _selectedOutput)
-				{
-					_intSelectOutput = i;
-					break;
-				}
-			}
+			foreach (var panel in _panelList)
+            {
+                for (int i = 0; i != _allDevices.Count; ++i)
+                {
+                    LivePacketDevice device = _allDevices[i];
+                    if (device.Name == panel.OutputName)
+                    {
+                        panel.OutputIndex = i;
+                        break;
+                    }
+                }
 
-			if (_intSelectOutput == -1)
-			{
-				OnSendError("Ethernet Ouput not found");
-				return false;
-			}
+                if (panel.OutputIndex == -1)
+                {
+                    OnSendError("Ethernet Ouput not found");
+                    ok = false;
+                }
+
+                ok = GetMatixData( panel);
+            }
+            return ok;
+		}
+
+        private bool GetMatixData(PanelSettings panel)
+        {
+			bool ok = true;
 
 			string result;
-			xSchedule_Action("GetMatrix", _selectedMatrix, "", out result);
+            xSchedule_Action("GetMatrix", panel.MatrixName, "", out result);
 
-			Matrix settings = JsonConvert.DeserializeObject<Matrix>(result);
-			if (!string.IsNullOrEmpty(settings.name))
-			{
-				_panelWidth = int.Parse(settings.width);
-				_panelHeight = int.Parse(settings.height);
-				_startChannel = int.Parse(settings.startchannel);
-				OnReloadDimensions();
-			}
-			else
-			{
-				OnSendError(_selectedMatrix + " Matrix not found");
-				return false;
-			}
+            Matrix settings = JsonConvert.DeserializeObject<Matrix>(result);
+            if (!string.IsNullOrEmpty(settings.name))
+            {
+                panel.PanelWidth = int.Parse(settings.width);
+                panel.PanelHeight = int.Parse(settings.height);
+                panel.StartChannel = int.Parse(settings.startchannel);
+            }
+            else
+            {
+                OnSendError(panel.MatrixName + " Matrix not found");
+                ok = false;
+            }
 
-			return true;
+            return ok;
+        }
+
+        public void SetSettings(int index, string outputName, int outputIndex,
+			int brightness, string matrixName)
+		{
+			_panelList[index].OutputName = outputName;
+			_panelList[index].OutputIndex = outputIndex;
+			_panelList[index].Brightness = brightness;
+			_panelList[index].MatrixName = matrixName;
+			//_panelList[index].PanelHeight = panelHeight;
+			//_panelList[index].PanelWidth = panelWidth;
+			//_panelList[index].StartChannel = startChannel;
+
+			GetMatixData(_panelList[index]);
+
+
+			SaveSetting();
+			OnSendSetPanel(index);
+		}
+
+		public void SaveSetting()
+		{
+			_setting.Save(_panelList);			
+		}
+
+		public void AddPanel(string name)
+		{
+			PanelSettings panel = new PanelSettings();
+			panel.PanelName = name;
+			_panelList.Add(panel);
+			SaveSetting();
+			OnSendSetPanel(_panelList.Count-1);
+		}
+
+		public void RemovePanel(int index)
+		{
+			if(index < _panelList.Count && index >= 0)
+			{ 
+				_panelList.RemoveAt(index);
+				SaveSetting();
+				if (_panelList.Count == 0)
+				{
+					OnSendSetPanel(-1);
+				}
+				else 
+				{
+					OnSendSetPanel(0); 
+				}
+			}			
+		}
+
+		public string[] GetPanelNames()
+		{
+			return _panelList.Select(s=>s.PanelName).ToArray();
 		}
 
 		/// <summary>
@@ -184,47 +255,50 @@ namespace ColorlightPlugin
 				return;
 
 			_outputing = true;
-			try
+			foreach (var panel in _panelList) 
 			{
-				if (_intSelectOutput == -1)
+				try
 				{
-					OnSendError("No Ethernet Output Setup, Skipping Output");
-					return;
-				}
-
-				if (_startChannel == -1)
-				{
-					OnSendError("No Matrix Set, Skipping Output");
-					return;
-				}
-				PacketDevice selectedDevice = _allDevices[_intSelectOutput];
-				using (PacketCommunicator communicator = selectedDevice.Open(100, // name of the device
-																		 PacketDeviceOpenAttributes.Promiscuous, // promiscuous mode
-																		 100)) // read timeout
-				{
-					MacAddress source = new MacAddress("22:22:33:44:55:66");
-
-					// set mac destination to 02:02:02:02:02:02
-					MacAddress destination = new MacAddress("11:22:33:44:55:66");
-
-					// Ethernet Layer
-					int pixelWidth = _panelWidth;
-					int pixelHeight = _panelHeight;
-					int startChannel = _startChannel;
-
-					communicator.SendPacket(BuildFirstPacket(source, destination));
-					communicator.SendPacket(BuildSecondPacket(source, destination));
-					for (int i = 0; i < pixelHeight; i++)
+					if (panel.OutputIndex == -1)
 					{
-						int offset = pixelWidth * i;
-						communicator.SendPacket(BuildPixelPacket(source, destination, i, pixelWidth, buffer, startChannel, offset));
+						OnSendError(panel.PanelName + " No Ethernet Output Setup, Skipping Output");
+						return;
+					}
+
+					if (panel.StartChannel == -1)
+					{
+						OnSendError(panel.PanelName + " No Matrix Set, Skipping Output");
+						return;
+					}
+					PacketDevice selectedDevice = _allDevices[panel.OutputIndex];
+					using (PacketCommunicator communicator = selectedDevice.Open(100, // name of the device
+																			 PacketDeviceOpenAttributes.Promiscuous, // promiscuous mode
+																			 100)) // read timeout
+					{
+						MacAddress source = new MacAddress("22:22:33:44:55:66");
+
+						// set mac destination to 02:02:02:02:02:02
+						MacAddress destination = new MacAddress("11:22:33:44:55:66");
+
+						// Ethernet Layer
+						int pixelWidth = panel.PanelWidth;
+						int pixelHeight = panel.PanelHeight;
+						int startChannel = panel.StartChannel;
+
+						communicator.SendPacket(BuildFirstPacket(source, destination));
+						communicator.SendPacket(BuildSecondPacket(source, destination));
+						for (int i = 0; i < pixelHeight; i++)
+						{
+							int offset = pixelWidth * i;
+							communicator.SendPacket(BuildPixelPacket(source, destination, i, pixelWidth, buffer, startChannel, offset, panel.Brightness));
+						}
 					}
 				}
-			}
-			catch (Exception ex)
-			{
-				OnSendError(ex.Message);
-			}
+				catch (Exception ex)
+				{
+					OnSendError(panel.PanelName + " Error " + ex.Message);
+				}
+			}			
 			_outputing = false;
 		}
 
@@ -283,7 +357,7 @@ namespace ColorlightPlugin
 		/// <summary>
 		/// This function builds the Ethernet Row Data Packet.
 		/// </summary>
-		private Packet BuildPixelPacket(MacAddress source, MacAddress destination, int row, int pixelsWidth, PixelBuffer data, int startChannel, int dataOffset)
+		private Packet BuildPixelPacket(MacAddress source, MacAddress destination, int row, int pixelsWidth, PixelBuffer data, int startChannel, int dataOffset, int brightness)
 		{
 			int offset = 0;
 			int width = pixelsWidth * 3;
@@ -323,7 +397,7 @@ namespace ColorlightPlugin
 				int indexwHead = 7 + i;
 				byte oldValue = data[i + (dataOffset * 3) + (startChannel - 1)];
 				//int oldint = Convert.ToInt32(data[i + (fullDataOffset * 3)]);
-				int newint = ((oldValue * _brightness) / 100);
+				int newint = ((oldValue * brightness) / 100);
 				byte newValue = Convert.ToByte(newint);
 				mainByte[indexwHead] = newValue;
 				//mainByte[indexwHead] = 0x88;
@@ -343,7 +417,7 @@ namespace ColorlightPlugin
 		/// <summary>
 		/// This function builds the Ethernet Row Data Packet with every third channel set to a color.
 		/// </summary>
-		private Packet BuildTestPacket(MacAddress source, MacAddress destination, int row, int pixelsWidth, int dataOffset, byte color, int testOffset)
+		private Packet BuildTestPacket(MacAddress source, MacAddress destination, int row, int pixelsWidth, int dataOffset, byte color, int testOffset, int brigtness)
 		{
 			int offset = 0;
 			int width = pixelsWidth * 3;
@@ -385,7 +459,7 @@ namespace ColorlightPlugin
 				if( i % 3 == testOffset)
 					oldValue = color;
 				//int oldint = Convert.ToInt32(data[i + (fullDataOffset * 3)]);
-				int newint = ((oldValue * _brightness) / 100);
+				int newint = ((oldValue * brigtness) / 100);
 				byte newValue = Convert.ToByte(newint);
 				mainByte[indexwHead] = newValue;
 				//mainByte[indexwHead] = 0x88;
@@ -405,22 +479,22 @@ namespace ColorlightPlugin
 		/// <summary>
 		/// This function sets the panel to a color.
 		/// </summary>
-		public void TestPanel(byte color, int testOffset)
+		public void TestPanel(byte color, int testOffset, PanelSettings panel)
 		{
 			try
 			{
-				if (_intSelectOutput == -1)
+				if (panel.OutputIndex == -1)
 				{
-					OnSendError("No Ethernet Output Setup, Skipping Output");
+					OnSendError(panel.PanelName + " No Ethernet Output Setup, Skipping Output");
 					return;
 				}
 
-				if (_startChannel == -1)
+				if (panel.StartChannel == -1)
 				{
-					OnSendError("No Matrix Set, Skipping Output");
+					OnSendError(panel.PanelName + " No Matrix Set, Skipping Output");
 					return;
 				}
-				PacketDevice selectedDevice = _allDevices[_intSelectOutput];
+				PacketDevice selectedDevice = _allDevices[panel.OutputIndex];
 				using (PacketCommunicator communicator = selectedDevice.Open(100, // name of the device
 																		 PacketDeviceOpenAttributes.Promiscuous, // promiscuous mode
 																		 100)) // read timeout
@@ -431,22 +505,33 @@ namespace ColorlightPlugin
 					MacAddress destination = new MacAddress("11:22:33:44:55:66");
 
 					// Ethernet Layer
-					int pixelWidth = _panelWidth;
-					int pixelHeight = _panelHeight;
-					int startChannel = _startChannel;
+					int pixelWidth = panel.PanelWidth;
+					int pixelHeight = panel.PanelHeight;
+					int startChannel = panel.StartChannel;
 
 					communicator.SendPacket(BuildFirstPacket(source, destination));
 					communicator.SendPacket(BuildSecondPacket(source, destination));
 					for (int i = 0; i < pixelHeight; i++)
 					{
 						int offset = pixelWidth * i;
-						communicator.SendPacket(BuildTestPacket(source, destination, i, pixelWidth, offset, color, testOffset));
+						communicator.SendPacket(BuildTestPacket(source, destination, i, pixelWidth, offset, color, testOffset, panel.Brightness));
 					}
 				}
 			}
 			catch (Exception ex)
 			{
-				OnSendError(ex.Message);
+				OnSendError(panel.PanelName + " Error " + ex.Message);
+			}
+		}
+
+		/// <summary>
+		/// This function sets the all panel to a color.
+		/// </summary>
+		public void TestAllPanels(byte color, int testOffset)
+		{
+			foreach (var panel in _panelList)
+			{
+				TestPanel(color, testOffset, panel);
 			}
 		}
 

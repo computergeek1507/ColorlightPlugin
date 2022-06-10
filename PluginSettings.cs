@@ -8,55 +8,36 @@ namespace ColorlightPlugin
 {
     public class PluginSettings
     {
-        public class Settings
-        {
-            public string EthernetOutput { get; set; }
-            public string MatrixName { get; set; }
-            public int Brightness { get; set; } = 100;
-        }
-
-        Settings _appSetting = new Settings();
         string _showFolder;
 
-        public PluginSettings(string showFolder)
+        public PluginSettings()
         {
-            _showFolder = showFolder;
-            Load();
+
         }
 
-        public void Load()
+        public void SetShowFolder(string showFolder)
         {
-            var path = _showFolder + "//ColorlightPlugin.xml";
+            _showFolder = showFolder;
+        }
+
+        public List<PanelSettings> Load()
+        {
+            var path = _showFolder + "//ColorlightPlugin2.xml";
             if (!System.IO.File.Exists(path))
-                return;
-            System.Xml.Serialization.XmlSerializer reader = new System.Xml.Serialization.XmlSerializer(typeof(Settings));
+                return new List<PanelSettings>();
+            System.Xml.Serialization.XmlSerializer reader = new System.Xml.Serialization.XmlSerializer(typeof(List<PanelSettings>));
             System.IO.StreamReader file = new System.IO.StreamReader(path);
-            _appSetting = (Settings)reader.Deserialize(file);
+             var setting = (List<PanelSettings>)reader.Deserialize(file);
             file.Close();
+            return setting;
         }
-        public void Save()
+        public void Save(List<PanelSettings> settings)
         {
-            System.Xml.Serialization.XmlSerializer writer = new System.Xml.Serialization.XmlSerializer(typeof(Settings));
-            var path = _showFolder + "//ColorlightPlugin.xml";
+            System.Xml.Serialization.XmlSerializer writer = new System.Xml.Serialization.XmlSerializer(typeof(List<PanelSettings>));
+            var path = _showFolder + "//ColorlightPlugin2.xml";
             System.IO.FileStream file = System.IO.File.Create(path);
-            writer.Serialize(file, _appSetting);
+            writer.Serialize(file, settings);
             file.Close();
-        }
-        
-        public string EthernetOutput 
-        { 
-            get { return _appSetting.EthernetOutput; }
-            set { _appSetting.EthernetOutput = value; }
-        }
-        public string MatrixName 
-        { 
-            get { return _appSetting.MatrixName; }
-            set { _appSetting.MatrixName = value; }
-        }
-        public int Brightness 
-        { 
-            get { return _appSetting.Brightness; }
-            set { _appSetting.Brightness = value; }
         }
     }
 }

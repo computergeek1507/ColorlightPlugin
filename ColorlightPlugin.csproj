@@ -129,8 +129,10 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="ColorlightPlugin.cs" />
+    <Compile Include="InputBox.cs" />
     <Compile Include="MatricesData.cs" />
     <Compile Include="Matrix.cs" />
+    <Compile Include="PanelSettings.cs" />
     <Compile Include="PluginSettings.cs" />
     <Compile Include="Properties\Resources.Designer.cs">
       <AutoGen>True</AutoGen>
